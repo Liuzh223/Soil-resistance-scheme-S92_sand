@@ -35,12 +35,12 @@ def load_data(base_path):
         if y.ndim != 1 or x.shape[1] != len(y) or not len(y):
             raise ValueError(f"X/y shape mismatch or empty {subset} subset")
         if not np.isfinite(x).all() or not np.isfinite(y).all():
-            raise ValueError(f"Nonfinite values in {subset}; inspect input rather than silently filtering samples")
+            raise ValueError(f"Nonfinite values in {subset}; provide finite input arrays")
     return arrays["X_train"].T, arrays["y_train"], arrays["X_test"].T, arrays["y_test"]
 
 
 def prepare_dataframes(x_train, y_train, x_test, y_test, remove_vars=None):
-    # Drop fc and dg in the main workflow; retain rd as in the original model.
+    # Select wetness, sand, wind speed, temperature, and rd as model inputs.
     X_train = pd.DataFrame(x_train, columns=INPUT_FEATURES)
     X_test = pd.DataFrame(x_test, columns=INPUT_FEATURES)
     if remove_vars:
@@ -53,7 +53,7 @@ def prepare_dataframes(x_train, y_train, x_test, y_test, remove_vars=None):
 
 
 def training_settings(output_dir):
-    # Search only XGBoost, with a 1800-second budget and R-squared as the metric.
+    # Search XGBoost regressors with a 1800-second budget and R-squared as the metric.
     return {
         "time_budget": 1800,
         "metric": "r2",
@@ -116,9 +116,9 @@ def _json_value(value):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--data-dir", type=Path, required=True, help="Directory containing the four original split NPY files")
+    parser.add_argument("--data-dir", type=Path, required=True, help="Directory containing the four train/test NPY files")
     parser.add_argument("--run-name", default="original_five_features", help="New subdirectory name below outputs/automl")
-    parser.add_argument("--check-inputs", action="store_true", help="Check shapes/feature order without training or writing outputs")
+    parser.add_argument("--check-inputs", action="store_true", help="Validate input shapes and feature order, then exit")
     args = parser.parse_args()
     if not args.run_name or args.run_name in (".", "..") or any(c in args.run_name for c in '/\\:'):
         parser.error("run-name must be a single directory name")
@@ -145,7 +145,7 @@ def main():
     joblib.dump(automl, output_dir / "beta_model_new_0224.pkl")
     test_evaluation = evaluate_model(automl, X_test, y_test)
     train_evaluation = evaluate_model(automl, X_train, y_train)
-    # Evaluate the fitted estimator without retraining during permutation importance.
+    # Compute test-set permutation importance using the fitted estimator.
     perm_importance = compute_permutation_importance(automl.model.estimator, X_test, y_test)
     save_results(automl, train_evaluation, test_evaluation, perm_importance, output_dir)
     print("Best hyperparameter configuration:", automl.best_config)

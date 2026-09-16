@@ -1,6 +1,6 @@
 """Select evaporation samples from outputs/derived.
 Output: selected NetCDFs for parameter fitting and pooled X/Y arrays.
-X includes beta and must not be used in full as ML input."""
+X stores the physical variables, including beta; Y stores the target beta."""
 from config import STATION_FILE, OUTPUT_ROOT, DERIVED_INPUT_DIR
 import pandas as pd
 import numpy as np
@@ -107,7 +107,7 @@ def main():
         # X rows: swc,porsl,aird,fc,sand,om,um,swt,dg,rd,PET,beta,Qg,bsw,psi0,hksati.
         X = np.stack((swc, porsl, aird, fc, sand, om, um, swt, dg, rd, PET, beta, Qg, bsw, psi0, hksati))
         Y = beta
-        # Concatenate site samples while retaining the original variable order.
+        # Concatenate site samples in the listed variable order.
         if i == 0:
             x_train = X
             y_train = Y

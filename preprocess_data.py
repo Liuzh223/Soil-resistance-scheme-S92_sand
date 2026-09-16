@@ -108,7 +108,7 @@ def main():
         data_swc['year'] = data_swc.index.year
         sele_years = data_srf['year'][data_srf['year_qc'] == 1]
         data_swc['year_qc'] = data_swc['year'].map(lambda x: 0 if x in sele_years else np.nan)
-        # Soil moisture and sand/organic content are volumetric fractions, not percentages.
+        # Soil moisture and sand/organic content are volumetric fractions.
         ht = data_met['reference_height_q'].values[0]
         porsl = data_srf['soil_theta_s'].values[0]
         # Convert soil water potential from cm to mm and conductivity to mm/s.

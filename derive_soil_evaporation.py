@@ -135,7 +135,7 @@ def main():
         df['Wsurf_R'] = df['Wsurf'] / df['porsl']
         df['LE_CORR_E'] = df['LE_CORR'] * ratio
         df['PET'] = df['rhoair'] * df['Lambda'] * (df['Qg'] - df['Qaf']) / df['rd']
-        # Retain this diagnostic: its missing values affect sample filtering.
+        # Model evaporation diagnostics are included in complete-record filtering.
         df['mLE_E'] = df['mLE'] * (df['evpa'] / df['evpg'])
         df['mPET'] = df['mLE_E'] / df['mbeita']
         df_new_1 = df.dropna()
