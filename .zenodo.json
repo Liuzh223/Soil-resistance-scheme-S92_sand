@@ -15,7 +15,7 @@
       "affiliation": "Sun Yat-Sen University"
     }
   ],
-  "description": "Key calculation code for the S92_sand soil surface resistance scheme, including data preparation, physical inversion, sample selection, XGBoost feature importance, parameter fitting, and the final parameterization. Auxiliary model variables come from CoLM simulations using the S92 scheme. This source-code release excludes input datasets, generated outputs, plotting code, and the PhySO search process. Corresponding author: Hua Yuan.",
+  "description": "Key calculation code for the S92_sand soil surface resistance scheme, including data preparation, physical inversion, sample selection, XGBoost feature importance, parameter fitting, and the final parameterization. Auxiliary model variables come from CoLM simulations using the S92 scheme.",
   "keywords": [
     "soil surface resistance",
     "soil evaporation",
