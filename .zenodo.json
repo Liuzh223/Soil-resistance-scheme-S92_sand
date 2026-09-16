@@ -1,0 +1,26 @@
+{
+  "title": "Soil resistance scheme S92_sand",
+  "version": "1.0.0",
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "mit",
+  "language": "eng",
+  "creators": [
+    {
+      "name": "Liu, Zhuo",
+      "affiliation": "Sun Yat-Sen University"
+    },
+    {
+      "name": "Yuan, Hua",
+      "affiliation": "Sun Yat-Sen University"
+    }
+  ],
+  "description": "Key calculation code for the S92_sand soil surface resistance scheme, including data preparation, physical inversion, sample selection, XGBoost feature importance, parameter fitting, and the final parameterization. Auxiliary model variables come from CoLM simulations using the S92 scheme. This source-code release excludes input datasets, generated outputs, plotting code, and the PhySO search process. Corresponding author: Hua Yuan.",
+  "keywords": [
+    "soil surface resistance",
+    "soil evaporation",
+    "S92_sand",
+    "CoLM",
+    "land surface modeling"
+  ]
+}
