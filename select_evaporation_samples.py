@@ -1,4 +1,13 @@
-"""Export E/ET-filtered samples. X includes target beta; do not use all rows as ML inputs."""
+"""Select evaporation samples from the physical inversion results.
+
+Workflow stage 3 reads derive_soil_evaporation.py outputs via DERIVED_INPUT_DIR.
+It produces two outputs with different roles:
+  outputs/selected/*_E_ET_20250115.nc: timestamp-preserving selected records
+      for fit_s92_sand_parameters.py, saved BEFORE the wetness-bin count filter.
+  outputs/samples/*.npy: pooled samples AFTER removing undersized wetness bins.
+The fitter performs its own binning and wetness-range selection on the NetCDFs.
+X has shape (16, N) and includes beta; Y has shape (N,) and contains beta.
+These arrays are not the seven-row split inputs read by the AutoML module."""
 from config import STATION_FILE, OUTPUT_ROOT, DERIVED_INPUT_DIR
 import pandas as pd
 import numpy as np
@@ -22,6 +31,7 @@ def find_common_periods(list1, list2):
 
 
 def main():
+    """Export selected NetCDFs for fitting and pooled arrays for sample inspection."""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     SELECTED_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     stnlist = str(STATION_FILE)
@@ -50,6 +60,8 @@ def main():
         df.replace([np.inf, -np.inf], np.nan, inplace=True)
         df_clean = df.dropna()
         # Save selected records for the subsequent parameter fitting.
+        # This is the fitting input, before bin-count filtering. The fitting module
+        # independently applies its own binning and 0.35 <= wetness < 0.6 window.
         xr.Dataset.from_dataframe(df).to_netcdf(SELECTED_OUTPUT_DIR / (sitename + "_" + common_parts[0] + "_E_ET_20250115.nc"))
         print('------------')
         print(sitename)
@@ -114,6 +126,8 @@ def main():
             y_train = np.concatenate((y_train, Y), axis=0)
         print(f'------{sitename}-------------')
         print(len(Y))
+    # These are full physical-variable arrays, not an AutoML train/test split.
+    # In particular, X row 11 is the target beta and equals Y.
     np.save(str(OUTPUT_DIR / "X_hourly_20250115_beta_all_corr.npy"), x_train)
     np.save(str(OUTPUT_DIR / "Y_hourly_20250115_beta_all_corr.npy"), y_train)
 

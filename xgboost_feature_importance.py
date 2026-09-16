@@ -1,4 +1,14 @@
-"""XGBoost/FLAML beta model: five inputs including rd; Figure 3b displays four."""
+"""Train the beta model and compute XGBoost permutation importance.
+
+This is a separate workflow, not the next stage after sample export or fitting.
+load_data reads the four existing train/test NPY files specified in INPUT_FILES.
+prepare_dataframes transposes no data itself: load_data already changes X from
+(7, N) to (N, 7). Dropping fc/dg leaves five model inputs, including rd.
+train_model uses FLAML; evaluate_model reports prediction metrics;
+compute_permutation_importance evaluates the fitted estimator on the test set;
+save_results writes numerical results under outputs/automl/<run-name>.
+Figure 3b displays four variables, while the original calculation retains rd.
+The 16-row arrays from select_evaporation_samples.py are not valid inputs here."""
 import argparse
 import hashlib
 import importlib.metadata
@@ -114,6 +124,7 @@ def _json_value(value):
 
 
 def main():
+    """Load the archived split, train/evaluate the model, and save a separate run."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data-dir", type=Path, required=True, help="Directory containing the four original split NPY files")
     parser.add_argument("--run-name", default="original_five_features", help="New subdirectory name below outputs/automl")
@@ -126,6 +137,7 @@ def main():
     print("Training/test shapes:", X_train.shape, X_test.shape)
     print("Model features:", list(X_train.columns))
     print("Paper Figure 3b display features:", PAPER_DISPLAY_FEATURES)
+    # Input inspection stops here; it does not launch FLAML or write run outputs.
     if args.check_inputs:
         return
     output_dir = OUTPUT_ROOT / "automl" / args.run_name
@@ -145,6 +157,7 @@ def main():
     test_evaluation = evaluate_model(automl, X_test, y_test)
     train_evaluation = evaluate_model(automl, X_train, y_train)
     # Evaluate the fitted estimator without retraining during permutation importance.
+    # Use the held-out test set, not the training data or FLAML internal validation split.
     perm_importance = compute_permutation_importance(automl.model.estimator, X_test, y_test)
     save_results(automl, train_evaluation, test_evaluation, perm_importance, output_dir)
     print("Best hyperparameter configuration:", automl.best_config)

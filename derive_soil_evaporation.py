@@ -1,4 +1,13 @@
-"""Derive surface conditions and beta/r_ss using CoLM simulations with the S92 scheme."""
+"""Derive surface conditions and beta/r_ss using CoLM simulations with S92.
+
+Workflow stage 2: prepared per-site NetCDF + daily radiation QC
+    -> outputs/derived/<site>_<period>_20250115.nc.
+Inputs normally come from preprocess_data.py; BASE_INPUT_DIR can instead point
+to compatible existing base files. physical_utils.py supplies the equations.
+The output adds Tsurf, Wsurf, Qg, rd, rss, beita (beta), ratio (E/ET), and PET.
+select_evaporation_samples.py reads this output through DERIVED_INPUT_DIR.
+Rejected rows remain on the time axis with NaN values; downstream filtering
+uses complete records, so diagnostic columns can affect sample availability."""
 from config import DATA_ROOT, STATION_FILE, OUTPUT_ROOT, BASE_INPUT_DIR, BASE_FILE_PATTERN
 import pandas as pd
 import numpy as np
@@ -22,6 +31,7 @@ def find_common_periods(list1, list2):
 
 
 def main():
+    """Read stage-1 data, apply physical inversion/filtering, and export stage-3 inputs."""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     stnlist = str(STATION_FILE)
     station_lists = pd.read_excel(stnlist, header=0)
@@ -36,6 +46,8 @@ def main():
         path_nc_file = BASE_INPUT_DIR / BASE_FILE_PATTERN.format(sitename=sitename, period=common_parts[0])
         data_base = xr.open_dataset(path_nc_file, engine='netcdf4')
         df = data_base.to_dataframe()
+        # The complete base table is retained so QC flags and model diagnostics
+        # remain available to the sample-selection module.
         path_ATR = (DATA_ROOT / "Fluxnet2015").as_posix() + "/" + 'FLX_' + sitename + '_FLUXNET2015_FULLSET_DD_' + startend + '.csv'
         data_file = pd.read_csv(path_ATR)
         data_file.set_index('TIMESTAMP', inplace=True)
@@ -147,6 +159,8 @@ def main():
         print(sitename)
         print(len(df))
         if len(df_clean) > 2:
+            # Write masked rows as NaN rather than shortening the time coordinate.
+            # select_evaporation_samples.py applies the stricter E/ET criteria next.
             ds = xr.Dataset.from_dataframe(df)
             nc_filename = str(OUTPUT_DIR) + "/" + sitename + '_' + common_parts[0] + '_20250115.nc'
             ds.to_netcdf(path=nc_filename, mode='w')
