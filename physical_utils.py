@@ -1,11 +1,5 @@
 """Physical functions used by derive_soil_evaporation.py.
-
-Function groups: soil moisture thresholds/diffusivity; saturation and soil-pore
-humidity; aerodynamic and canopy transfer resistance; surface temperature.
-Internal calls include calculate_Qg -> qsadv, calculate_raw -> moninobuk -> psi,
-and calc_surface_temperature_from_canopy_obs_ratio -> calculate_emis_veg.
-Inputs are supplied by the calling script; this module performs no file I/O.
-Units: K, Pa, kg/kg (specific humidity), s/m (resistance), mm (water potential)."""
+Units: K, Pa, kg/kg, s/m, and mm (water potential)."""
 import numpy as np
 vonkar = 0.4
 

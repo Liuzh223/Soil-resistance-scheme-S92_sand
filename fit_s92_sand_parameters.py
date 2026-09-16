@@ -1,13 +1,5 @@
-"""Fit site-specific S92 parameters and their relationship with sand fraction.
-
-Workflow stage 4 reads the selected NetCDFs from select_evaporation_samples.py
-through FIT_INPUT_DIR. It bins each site's data and fits b to observed beta,
-then regresses the fitted b values against site sand fractions.
-Outputs: outputs/fit/S92_sand_station_parameters.csv and
-         outputs/fit/S92_sand_coefficients.csv.
-The regression is linear here; the positive softplus transform and smooth
-transitions are implemented in s92_sand_parameterization.py. That module uses
-the fixed manuscript coefficients and does not automatically load these CSVs."""
+"""Fit site parameters and their relationship with sand fraction.
+Input: selected NetCDFs. Output: parameter CSVs in outputs/fit."""
 from config import STATION_FILE, OUTPUT_ROOT, FIT_INPUT_DIR
 import pandas as pd
 import numpy as np
@@ -46,7 +38,6 @@ def linear_func(x, a, b):
 
 
 def main():
-    """Fit four sites, then pass their fitted parameters directly to sand regression."""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     stnlist = str(STATION_FILE)
     station_lists = pd.read_excel(stnlist, header=0)
@@ -61,7 +52,6 @@ def main():
         startend = sta_list['start_end']
         path_nc_SE = sta_list['start_end_qc']
         common_parts = find_common_periods(path_nc_SE, startend)
-        # Read the timestamp-preserving selected files, not the pooled NPY arrays.
         path_nc_obs = str(FIT_INPUT_DIR) + "/" + sitename + '_' + common_parts[0] + '_E_ET_20250115.nc'
         data_obs = xr.open_dataset(path_nc_obs, engine='netcdf4')
         df_obs = data_obs.to_dataframe()
@@ -92,7 +82,6 @@ def main():
         popt, _ = curve_fit(model_s92, xdata, ydata)
         b_estimated = popt
         parameter_rows.append({'sitename': sitename, 'sand': float(filtered_df['sand'].iloc[0]), 'b_estimated': float(b_estimated[0]), 'n_fit': int(len(ydata))})
-    # The second fit consumes this run's site parameters, avoiding a stale CSV.
     full_df = pd.DataFrame(parameter_rows)
     full_df.to_csv(OUTPUT_DIR / 'S92_sand_station_parameters.csv', index=False)
     # Regress the fitted site parameters against sand fraction: b = slope*sand + intercept.
@@ -100,8 +89,6 @@ def main():
     y_data = full_df['b_estimated'].values.astype(float)
     popt, _ = curve_fit(linear_func, x_data, y_data)
     r_squared = pearsonr(x_data, y_data)[0] ** 2
-    # Export unrounded coefficients for inspection. The final scheme module
-    # retains the published rounded coefficients until explicitly edited.
     pd.DataFrame([{'slope': popt[0], 'intercept': popt[1], 'R_squared': r_squared}]).to_csv(OUTPUT_DIR / 'S92_sand_coefficients.csv', index=False)
     print('S92_sand: b =', popt[0], '* sand +', popt[1], '; R2 =', r_squared)
 

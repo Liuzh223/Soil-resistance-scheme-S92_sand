@@ -1,12 +1,5 @@
-"""Prepare observations and auxiliary data from CoLM simulations using S92.
-
-Workflow stage 1: raw observations + forcing + site metadata + CoLM output
-    -> outputs/base_data/<site>_<period>_S92.nc (default naming).
-derive_soil_evaporation.py reads these per-site files through BASE_INPUT_DIR.
-Paths and filename templates are configured in config.py; no data are bundled.
-The output combines observed fluxes/QC flags, modeled soil layers and E/ET
-components, and site constants. It retains the original time-alignment rules.
-Run this script explicitly; importing it does not execute preprocessing."""
+"""Prepare observations and CoLM S92 auxiliary data.
+Output: outputs/base_data, read by derive_soil_evaporation.py."""
 from config import DATA_ROOT, STATION_FILE, OUTPUT_ROOT, MODEL_INPUT_DIR, MODEL_FILE_PATTERN, BASE_FILE_PATTERN
 import pandas as pd
 import numpy as np
@@ -67,7 +60,6 @@ def find_common_periods(list1, list2):
 
 
 def main():
-    """Read each enabled site, combine its inputs, and export the stage-2 base file."""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     stnlist = str(STATION_FILE)
     station_lists = pd.read_excel(stnlist, header=0)
@@ -101,8 +93,6 @@ def main():
         data_srf = xr.open_dataset(path_SRF, engine='netcdf4')
         data_model = xr.open_dataset(path_model, engine='netcdf4')
         data_model['time'] = pd.to_datetime(data_model['time'].values, format='%Y%m%d%H%M')
-        # These model variables supply the layer corrections and evaporation partition
-        # used in derive_soil_evaporation.py; retain their names in the output.
         data_model = data_model[['f_t_soisno', 'f_h2osoi', 'f_fevpa', 'f_fevpg', 'f_tleaf', 'f_olrg', 'f_t_grnd', 'f_ustar', 'f_lfevpa', 'f_fsena', 'f_fsno', 'f_lai', 'f_sai', 'f_rss']]
         # Restrict observations and model outputs to their common years.
         common_parts = find_common_periods(path_nc_SE, startend)
@@ -251,7 +241,6 @@ def main():
         ds['IGBP'] = xr.DataArray(IGBP)
         ds['lat'] = xr.DataArray(lat)
         ds['lon'] = xr.DataArray(lon)
-        # BASE_FILE_PATTERN is shared with the reader in derive_soil_evaporation.py.
         nc_filename = OUTPUT_DIR / BASE_FILE_PATTERN.format(sitename=sitename, period=common_parts[0])
         ds.to_netcdf(path=nc_filename, mode='w')
         print('----------------------------')
